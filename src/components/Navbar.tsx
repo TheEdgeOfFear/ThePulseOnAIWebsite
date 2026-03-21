@@ -16,10 +16,10 @@ export default function Navbar() {
 
         {/* Desktop Links */}
         <div className="hidden md:flex gap-8 items-center">
-          <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#81ecff] border-b-2 border-[#81ecff] pb-1" href="#">Feed</Link>
-          <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#f9f9f9] hover:text-[#81ecff] transition-colors" href="#">Training</Link>
-          <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#f9f9f9] hover:text-[#81ecff] transition-colors" href="#">Robotics</Link>
-          <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#f9f9f9] hover:text-[#81ecff] transition-colors" href="#">News</Link>
+          <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#81ecff] border-b-2 border-[#81ecff] pb-1" href="/">Feed</Link>
+          <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#f9f9f9] hover:text-[#81ecff] transition-colors" href="/training">Training</Link>
+          <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#f9f9f9] hover:text-[#81ecff] transition-colors" href="/blogs">Blogs</Link>
+          <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#f9f9f9] hover:text-[#81ecff] transition-colors" href="/news">News</Link>
         </div>
 
         {/* Desktop CTA & Mobile Toggle */}
