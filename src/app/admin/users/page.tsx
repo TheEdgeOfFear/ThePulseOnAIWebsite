@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -19,12 +19,36 @@ interface AdminUser {
   createdAt: string;
 }
 
-const initialUsers: AdminUser[] = [
+const defaultUsers: AdminUser[] = [
   { id: "1", email: "admin@thepulseonai.com", password: "admin123", role: "Super Admin", createdAt: "2026-03-01" },
 ];
 
+function loadUsers(): AdminUser[] {
+  if (typeof window === "undefined") return defaultUsers;
+  try {
+    const stored = localStorage.getItem("pulse_admin_users");
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return defaultUsers;
+}
+
+function saveUsers(users: AdminUser[]) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("pulse_admin_users", JSON.stringify(users));
+}
+
 export default function AdminUsers() {
-  const [users, setUsers] = useState<AdminUser[]>(initialUsers);
+  const [users, setUsers] = useState<AdminUser[]>(defaultUsers);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    setUsers(loadUsers());
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (loaded) saveUsers(users);
+  }, [users, loaded]);
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [email, setEmail] = useState("");
@@ -225,7 +249,7 @@ export default function AdminUsers() {
           <span className="material-symbols-outlined text-primary mt-0.5">info</span>
           <div>
             <p className="font-headline text-xs font-bold text-primary uppercase tracking-widest mb-1">Security Note</p>
-            <p className="text-on-surface-variant text-xs font-body">These credentials are used to log in to the admin dashboard at <span className="text-primary">/login</span>. Changes here will take effect once the backend API routes are connected to the D1 database.</p>
+            <p className="text-on-surface-variant text-xs font-body">These credentials are saved to your browser and used to log in at <span className="text-primary">/login</span>. Changes take effect immediately.</p>
           </div>
         </div>
       </main>

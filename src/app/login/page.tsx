@@ -13,9 +13,21 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    // Simple credential check - in production this calls NextAuth signIn
-    if (email === "admin@thepulseonai.com" && password === "admin123") {
-      // Store session flag
+
+    // Check credentials against saved admin users in localStorage
+    let users = [{ email: "admin@thepulseonai.com", password: "admin123" }];
+    try {
+      const stored = localStorage.getItem("pulse_admin_users");
+      if (stored) {
+        users = JSON.parse(stored);
+      }
+    } catch {}
+
+    const matched = users.find(
+      (u: { email: string; password: string }) => u.email === email && u.password === password
+    );
+
+    if (matched) {
       document.cookie = "admin_session=true; path=/; max-age=86400";
       router.push("/admin");
     } else {
