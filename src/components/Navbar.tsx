@@ -1,12 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import SearchOverlay from "./SearchOverlay";
+
+const navLinks = [
+  { label: "Feed", href: "/" },
+  { label: "Training", href: "/training" },
+  { label: "Blogs", href: "/blogs" },
+  { label: "News", href: "/news" },
+];
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const pathname = usePathname();
+
+  function isActive(href: string) {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  }
 
   return (
     <>
@@ -19,10 +33,19 @@ export default function Navbar() {
 
           {/* Desktop Links */}
           <div className="hidden md:flex gap-8 items-center">
-            <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#81ecff] border-b-2 border-[#81ecff] pb-1" href="/">Feed</Link>
-            <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#f9f9f9] hover:text-[#81ecff] transition-colors" href="/training">Training</Link>
-            <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#f9f9f9] hover:text-[#81ecff] transition-colors" href="/blogs">Blogs</Link>
-            <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#f9f9f9] hover:text-[#81ecff] transition-colors" href="/news">News</Link>
+            {navLinks.map(link => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold transition-colors ${
+                  isActive(link.href)
+                    ? "text-[#81ecff] border-b-2 border-[#81ecff] pb-1"
+                    : "text-[#f9f9f9] hover:text-[#81ecff]"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
 
           {/* Desktop CTA & Mobile Toggle */}
@@ -39,36 +62,80 @@ export default function Navbar() {
             
             {/* Mobile Hamburger Button */}
             <button 
-              className="md:hidden text-primary p-2 material-symbols-outlined"
+              className="md:hidden text-primary p-2 material-symbols-outlined z-[60]"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? "close" : "menu"}
             </button>
           </div>
         </div>
-
-        {/* Mobile Menu Dropdown */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-16 left-0 w-full bg-[#0d0e12]/95 backdrop-blur-3xl border-b border-white/10 flex flex-col p-6 space-y-6 shadow-2xl">
-            <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#81ecff]" href="/" onClick={() => setIsMobileMenuOpen(false)}>Feed</Link>
-            <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#f9f9f9]" href="/training" onClick={() => setIsMobileMenuOpen(false)}>Training</Link>
-            <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#f9f9f9]" href="/blogs" onClick={() => setIsMobileMenuOpen(false)}>Blogs</Link>
-            <Link className="font-headline uppercase tracking-[0.1em] text-[0.75rem] font-bold text-[#f9f9f9]" href="/news" onClick={() => setIsMobileMenuOpen(false)}>News</Link>
-            
-            <div className="pt-4 border-t border-white/10 flex flex-col gap-4">
-              <button
-                onClick={() => { setIsMobileMenuOpen(false); setIsSearchOpen(true); }}
-                className="flex items-center gap-2 text-[#81ecff] font-headline uppercase font-bold text-xs"
-              >
-                <span className="material-symbols-outlined text-sm">search</span> Search
-              </button>
-              <Link href="/login" className="bg-gradient-to-br from-primary to-primary-container text-on-primary-container px-5 py-3 rounded-md font-headline font-bold text-xs uppercase tracking-wider text-center" onClick={() => setIsMobileMenuOpen(false)}>
-                Connect Core
-              </Link>
-            </div>
-          </div>
-        )}
       </nav>
+
+      {/* Mobile Side Menu - slides in from right */}
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 bg-black/60 z-[55] md:hidden transition-opacity duration-300 ${
+          isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+
+      {/* Side Panel */}
+      <div
+        className={`fixed top-0 right-0 h-full w-72 bg-[#0d0e12] border-l border-[#81ecff]/10 z-[58] md:hidden flex flex-col transform transition-transform duration-300 ease-in-out ${
+          isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        {/* Panel Header */}
+        <div className="flex items-center justify-between p-6 border-b border-white/10">
+          <span className="font-headline text-sm font-bold text-[#81ecff] tracking-tighter">NAVIGATION</span>
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="material-symbols-outlined text-[#81ecff] text-xl"
+          >
+            close
+          </button>
+        </div>
+
+        {/* Nav Links */}
+        <div className="flex flex-col p-4 gap-1 flex-1">
+          {navLinks.map(link => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-4 py-4 rounded-lg font-headline uppercase tracking-[0.15em] text-[0.75rem] font-bold transition-all ${
+                isActive(link.href)
+                  ? "text-[#81ecff] bg-[#81ecff]/10 border-l-2 border-[#81ecff]"
+                  : "text-[#f9f9f9]/80 hover:text-[#81ecff] hover:bg-white/5"
+              }`}
+            >
+              <span className="material-symbols-outlined text-lg">
+                {link.label === "Feed" ? "dynamic_feed" : link.label === "Training" ? "school" : link.label === "Blogs" ? "article" : "newspaper"}
+              </span>
+              {link.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Bottom Actions */}
+        <div className="p-4 border-t border-white/10 space-y-3">
+          <button
+            onClick={() => { setIsMobileMenuOpen(false); setIsSearchOpen(true); }}
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-[#81ecff] font-headline uppercase font-bold text-xs tracking-widest hover:bg-white/5 transition-all"
+          >
+            <span className="material-symbols-outlined text-lg">search</span> Search
+          </button>
+          <Link
+            href="/login"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="flex items-center justify-center gap-2 w-full bg-gradient-to-br from-primary to-primary-container text-on-primary-container px-5 py-3 rounded-md font-headline font-bold text-xs uppercase tracking-wider"
+          >
+            <span className="material-symbols-outlined text-lg">login</span>
+            Connect Core
+          </Link>
+        </div>
+      </div>
 
       <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
