@@ -4,6 +4,7 @@ import { useState } from "react";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
+  { label: "Users", href: "/admin/users", icon: "group" },
   { label: "Blogs", href: "/admin/blogs", icon: "article" },
   { label: "News", href: "/admin/news", icon: "newspaper" },
   { label: "Tutorials", href: "/admin/tutorials", icon: "school" },
