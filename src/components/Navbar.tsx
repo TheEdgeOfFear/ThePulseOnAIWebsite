@@ -10,6 +10,7 @@ const navLinks = [
   { label: "Training", href: "/training" },
   { label: "Blogs", href: "/blogs" },
   { label: "News", href: "/news" },
+  { label: "Recommended", href: "/recommended" },
 ];
 
 export default function Navbar() {

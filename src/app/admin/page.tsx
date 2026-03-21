@@ -14,6 +14,7 @@ const navItems = [
   { label: "Users", href: "/admin/users", icon: "group" },
   { label: "Blogs", href: "/admin/blogs", icon: "article" },
   { label: "News", href: "/admin/news", icon: "newspaper" },
+  { label: "Recommended", href: "/admin/recommended", icon: "recommend" },
   { label: "Tutorials", href: "/admin/tutorials", icon: "school" },
   { label: "View Site", href: "/", icon: "open_in_new" },
 ];
@@ -114,3 +115,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
