@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { loadTutorials, deleteTutorial, type Tutorial } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -11,14 +12,14 @@ const sidebarItems = [
   { label: "View Site", href: "/", icon: "open_in_new" },
 ];
 
-const sampleTutorials = [
-  { id: "1", title: "Prompt Engineering 2.0", type: "YouTube", isSecured: false, createdAt: "2026-03-18" },
-  { id: "2", title: "Robotics Kinematics Deep Dive", type: "PDF", isSecured: true, createdAt: "2026-03-15" },
-  { id: "3", title: "LLM Fine-tuning Workshop", type: "YouTube + PDF", isSecured: true, createdAt: "2026-03-10" },
-];
-
 export default function AdminTutorials() {
-  const [tutorials] = useState(sampleTutorials);
+  const [tutorials, setTutorials] = useState<Tutorial[]>([]);
+  useEffect(() => { setTutorials(loadTutorials()); }, []);
+
+  function handleDelete(id: string) {
+    deleteTutorial(id);
+    setTutorials(loadTutorials());
+  }
 
   return (
     <div className="min-h-screen bg-surface flex">
@@ -81,7 +82,7 @@ export default function AdminTutorials() {
               <div className="col-span-2 font-headline text-xs text-on-surface-variant">{tut.createdAt}</div>
               <div className="col-span-1 flex items-center gap-2">
                 <Link href={`/admin/tutorials/${tut.id}/edit`} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-primary transition-colors">edit</Link>
-                <button className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
+                <button onClick={() => handleDelete(tut.id)} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
               </div>
             </div>
           ))}

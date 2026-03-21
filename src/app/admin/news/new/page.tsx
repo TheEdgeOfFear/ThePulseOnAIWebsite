@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { addNews } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -12,6 +14,7 @@ const sidebarItems = [
 ];
 
 export default function NewNews() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [source, setSource] = useState("");
@@ -22,9 +25,10 @@ export default function NewNews() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await new Promise(r => setTimeout(r, 800));
+    addNews({ title, summary: content, category: "General", source, imageUrl });
     setSaved(true);
     setSaving(false);
+    setTimeout(() => router.push("/admin/news"), 800);
   }
 
   return (

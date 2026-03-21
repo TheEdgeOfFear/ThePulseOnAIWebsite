@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { addTutorial } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -12,6 +14,7 @@ const sidebarItems = [
 ];
 
 export default function NewTutorial() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [youtubeLink, setYoutubeLink] = useState("");
@@ -23,9 +26,12 @@ export default function NewTutorial() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await new Promise(r => setTimeout(r, 800));
+    const type = youtubeLink ? "youtube" : "pdf";
+    const url = youtubeLink || pdfUrl;
+    addTutorial({ title, description, type, url, isSecured });
     setSaved(true);
     setSaving(false);
+    setTimeout(() => router.push("/admin/tutorials"), 800);
   }
 
   return (

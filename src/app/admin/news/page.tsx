@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { loadNews, deleteNews, type NewsArticle } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -11,14 +12,14 @@ const sidebarItems = [
   { label: "View Site", href: "/", icon: "open_in_new" },
 ];
 
-const sampleNews = [
-  { id: "1", title: "DeepMind's New Model Achieves 99% Logical Reasoning", source: "Data Pulse", publishedAt: "2026-03-21" },
-  { id: "2", title: "Robotics Stocks Surge as Factory Automation Hits Record Highs", source: "Market Wire", publishedAt: "2026-03-21" },
-  { id: "3", title: "Global AI Safety Accord Signed by 14 Leading Research Labs", source: "Policy Wire", publishedAt: "2026-03-20" },
-];
-
 export default function AdminNews() {
-  const [news] = useState(sampleNews);
+  const [news, setNews] = useState<NewsArticle[]>([]);
+  useEffect(() => { setNews(loadNews()); }, []);
+
+  function handleDelete(id: string) {
+    deleteNews(id);
+    setNews(loadNews());
+  }
 
   return (
     <div className="min-h-screen bg-surface flex">
@@ -82,10 +83,10 @@ export default function AdminNews() {
             <div key={item.id} className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors ${i < news.length - 1 ? 'border-b border-outline-variant/10' : ''}`}>
               <div className="col-span-6 font-headline text-sm font-medium text-on-surface">{item.title}</div>
               <div className="col-span-2 font-headline text-xs text-primary">{item.source}</div>
-              <div className="col-span-2 font-headline text-xs text-on-surface-variant">{item.publishedAt}</div>
+              <div className="col-span-2 font-headline text-xs text-on-surface-variant">{item.createdAt}</div>
               <div className="col-span-2 flex items-center gap-2">
                 <Link href={`/admin/news/${item.id}/edit`} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-primary transition-colors">edit</Link>
-                <button className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
+                <button onClick={() => handleDelete(item.id)} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
               </div>
             </div>
           ))}

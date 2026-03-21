@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { loadBlogs, deleteBlog, type BlogPost } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -11,15 +12,14 @@ const sidebarItems = [
   { label: "View Site", href: "/", icon: "open_in_new" },
 ];
 
-// Sample data - will be replaced with DB calls
-const sampleBlogs = [
-  { id: "1", title: "Mimicking the Human Synapse", slug: "human-synapse", createdAt: "2026-03-18" },
-  { id: "2", title: "The Alignment Problem", slug: "alignment-problem", createdAt: "2026-03-15" },
-  { id: "3", title: "Qubits and Cognition", slug: "qubits-cognition", createdAt: "2026-03-10" },
-];
-
 export default function AdminBlogs() {
-  const [blogs] = useState(sampleBlogs);
+  const [blogs, setBlogs] = useState<BlogPost[]>([]);
+  useEffect(() => { setBlogs(loadBlogs()); }, []);
+
+  function handleDelete(id: string) {
+    deleteBlog(id);
+    setBlogs(loadBlogs());
+  }
 
   return (
     <div className="min-h-screen bg-surface flex">
@@ -70,7 +70,7 @@ export default function AdminBlogs() {
               <div className="col-span-2 font-headline text-xs text-on-surface-variant">{blog.createdAt}</div>
               <div className="col-span-1 flex items-center gap-2">
                 <Link href={`/admin/blogs/${blog.id}/edit`} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-primary transition-colors">edit</Link>
-                <button className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
+                <button onClick={() => handleDelete(blog.id)} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
               </div>
             </div>
           ))}

@@ -1,47 +1,15 @@
+"use client";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
-
-const sampleNews = [
-  {
-    id: "1",
-    title: "DeepMind's New Model Achieves 99% Logical Reasoning",
-    content: "The latest architecture demonstrates near-human cognitive flexibility in abstract problem-solving environments.",
-    source: "Data Pulse",
-    publishedAt: "2026-03-21",
-    imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDXkCl__vuNYVz2f9KGCtW3oer2Q8jSFBAIUct-6IWN0dk8x9DJ3KgyRYyTimo7hcr7SsYdcf9mmaSdW4I5WTTHH6PCHSct37VeXIzccvts91o3ERjqIULFODSNvr0V-5ZoVVygGr3StpSYODQEBWhxsqgsljfNfMnbpGSxEMqHbTIBIxLjlFCDNvCGr8olsiJYIzlav0uPRzBEZQGf6zUAHh6tgJrtOED_GhbPAzDUetlzSPgV346-6m1tj-RcspVWiG3sSM6sDppg",
-    category: "Breaking",
-  },
-  {
-    id: "2",
-    title: "Robotics Stocks Surge as Factory Automation Hits Record Highs",
-    content: "Manufacturing automation is reshaping markets as AI-powered robotic arms become the new industrial standard.",
-    source: "Market Wire",
-    publishedAt: "2026-03-21",
-    imageUrl: "",
-    category: "Market Alert",
-  },
-  {
-    id: "3",
-    title: "Global AI Safety Accord Signed by 14 Leading Research Labs",
-    content: "A landmark agreement commits signatories to shared safety evaluation protocols before frontier model releases.",
-    source: "Policy Wire",
-    publishedAt: "2026-03-20",
-    imageUrl: "",
-    category: "Policy",
-  },
-  {
-    id: "4",
-    title: "Nvidia Blackwell Chips Integration Begins at Major Data Hubs",
-    content: "The next-generation Blackwell architecture is now being integrated into the largest data centers worldwide.",
-    source: "Tech Desk",
-    publishedAt: "2026-03-20",
-    imageUrl: "",
-    category: "Hardware",
-  },
-];
+import { useState, useEffect } from "react";
+import { loadNews, type NewsArticle } from "@/lib/dataStore";
 
 export default function NewsPage() {
-  const [featured, ...rest] = sampleNews;
+  const [allNews, setAllNews] = useState<NewsArticle[]>([]);
+  useEffect(() => { setAllNews(loadNews()); }, []);
+
+  const featured = allNews[0];
+  const rest = allNews.slice(1);
 
   return (
     <>
@@ -60,41 +28,47 @@ export default function NewsPage() {
         </section>
 
         {/* Featured Article */}
-        <section className="px-8 max-w-7xl mx-auto mb-12">
-          <div className="group relative overflow-hidden rounded-xl bg-surface-container aspect-video md:aspect-[21/8]">
-            {featured.imageUrl && (
-              <img className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" src={featured.imageUrl} alt={featured.title} />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/30 to-transparent" />
-            <div className="absolute bottom-0 p-8 md:p-12">
-              <span className="bg-primary-container text-on-primary-container font-headline text-[10px] font-extrabold px-2 py-1 uppercase tracking-tighter mb-4 inline-block">{featured.category}</span>
-              <h2 className="font-headline text-2xl md:text-4xl font-bold leading-tight mb-3 max-w-3xl">{featured.title}</h2>
-              <p className="text-on-surface-variant line-clamp-2 max-w-2xl mb-4 font-body">{featured.content}</p>
-              <div className="flex items-center gap-4">
-                <span className="text-xs font-headline font-bold uppercase tracking-widest text-primary">{featured.source}</span>
-                <span className="h-[1px] w-8 bg-primary/30" />
-                <span className="text-xs text-on-surface-variant font-body">{featured.publishedAt}</span>
+        {featured && (
+          <section className="px-8 max-w-7xl mx-auto mb-12">
+            <div className="group relative overflow-hidden rounded-xl bg-surface-container aspect-video md:aspect-[21/8]">
+              {featured.imageUrl && (
+                <img className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" src={featured.imageUrl} alt={featured.title} />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/30 to-transparent" />
+              <div className="absolute bottom-0 p-8 md:p-12">
+                <span className="bg-primary-container text-on-primary-container font-headline text-[10px] font-extrabold px-2 py-1 uppercase tracking-tighter mb-4 inline-block">{featured.category}</span>
+                <h2 className="font-headline text-2xl md:text-4xl font-bold leading-tight mb-3 max-w-3xl">{featured.title}</h2>
+                <p className="text-on-surface-variant line-clamp-2 max-w-2xl mb-4 font-body">{featured.summary}</p>
+                <div className="flex items-center gap-4">
+                  <span className="text-xs font-headline font-bold uppercase tracking-widest text-primary">{featured.source}</span>
+                  <span className="h-[1px] w-8 bg-primary/30" />
+                  <span className="text-xs text-on-surface-variant font-body">{featured.createdAt}</span>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* News Grid */}
         <section className="px-8 max-w-7xl mx-auto pb-24">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {rest.map(item => (
-              <div key={item.id} className="p-6 bg-surface-container-low rounded-xl border-l-4 border-primary hover:bg-surface-container transition-colors group cursor-pointer">
-                <span className="font-headline text-[10px] text-primary uppercase tracking-widest mb-2 block font-bold">{item.category}</span>
-                <h3 className="font-headline text-lg font-bold leading-tight mb-2 group-hover:text-primary transition-colors">{item.title}</h3>
-                <p className="text-on-surface-variant text-sm font-body line-clamp-2 mb-3">{item.content}</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-on-surface-variant">{item.publishedAt}</span>
-                  <span className="text-outline-variant">·</span>
-                  <span className="text-xs text-primary font-headline">{item.source}</span>
+          {rest.length === 0 && !featured ? (
+            <div className="text-center py-20 text-on-surface-variant font-body">No news articles yet. Create one from the admin panel.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {rest.map(item => (
+                <div key={item.id} className="p-6 bg-surface-container-low rounded-xl border-l-4 border-primary hover:bg-surface-container transition-colors group cursor-pointer">
+                  <span className="font-headline text-[10px] text-primary uppercase tracking-widest mb-2 block font-bold">{item.category}</span>
+                  <h3 className="font-headline text-lg font-bold leading-tight mb-2 group-hover:text-primary transition-colors">{item.title}</h3>
+                  <p className="text-on-surface-variant text-sm font-body line-clamp-2 mb-3">{item.summary}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-on-surface-variant">{item.createdAt}</span>
+                    <span className="text-outline-variant">·</span>
+                    <span className="text-xs text-primary font-headline">{item.source}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </main>
 

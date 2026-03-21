@@ -1,46 +1,13 @@
+"use client";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
-
-const tutorials = [
-  {
-    id: "1",
-    title: "Prompt Engineering 2.0",
-    description: "Mastering the logic behind stochastic resonance and advanced prompting techniques for LLMs.",
-    youtubeLink: "https://youtube.com",
-    pdfUrl: "",
-    isSecured: false,
-    icon: "terminal",
-  },
-  {
-    id: "2",
-    title: "Robotics Kinematics Deep Dive",
-    description: "A full technical walkthrough of inverse kinematics and modern humanoid control algorithms.",
-    youtubeLink: "https://youtube.com",
-    pdfUrl: "/pdfs/robotics-kinematics.pdf",
-    isSecured: true,
-    icon: "memory",
-  },
-  {
-    id: "3",
-    title: "LLM Fine-Tuning Workshop",
-    description: "Hands-on fine-tuning with LoRA and QLoRA adapters on consumer hardware.",
-    youtubeLink: "https://youtube.com",
-    pdfUrl: "/pdfs/llm-finetuning.pdf",
-    isSecured: true,
-    icon: "model_training",
-  },
-  {
-    id: "4",
-    title: "Introduction to AI Agents",
-    description: "Building autonomous multi-modal agents using tool-use, memory, and planning scaffolds.",
-    youtubeLink: "https://youtube.com",
-    pdfUrl: "",
-    isSecured: false,
-    icon: "smart_toy",
-  },
-];
+import { useState, useEffect } from "react";
+import { loadTutorials, type Tutorial } from "@/lib/dataStore";
 
 export default function TrainingPage() {
+  const [tutorials, setTutorials] = useState<Tutorial[]>([]);
+  useEffect(() => { setTutorials(loadTutorials()); }, []);
+
   return (
     <>
       <Navbar />
@@ -75,48 +42,44 @@ export default function TrainingPage() {
         <section className="py-16 px-8 bg-surface-container-low">
           <div className="max-w-7xl mx-auto">
             <h2 className="font-headline text-3xl font-bold tracking-tight mb-10">All Modules</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {tutorials.map(tut => (
-                <div key={tut.id} className="flex flex-col gap-4 p-6 bg-surface-container rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-all group">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-primary">{tut.icon}</span>
-                      <h3 className="font-headline text-lg font-bold group-hover:text-primary transition-colors">{tut.title}</h3>
+            {tutorials.length === 0 ? (
+              <div className="text-center py-20 text-on-surface-variant font-body">No tutorials yet. Create one from the admin panel.</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {tutorials.map(tut => (
+                  <div key={tut.id} className="flex flex-col gap-4 p-6 bg-surface-container rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-all group">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-primary">{tut.type === "youtube" ? "play_circle" : "picture_as_pdf"}</span>
+                        <h3 className="font-headline text-lg font-bold group-hover:text-primary transition-colors">{tut.title}</h3>
+                      </div>
+                      {tut.isSecured ? (
+                        <span className="flex items-center gap-1 text-[10px] font-headline uppercase tracking-widest text-on-error-container bg-error-container/20 px-2 py-1 rounded flex-shrink-0">
+                          <span className="material-symbols-outlined text-[12px]">lock</span> Members Only
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[10px] font-headline uppercase tracking-widest text-primary bg-primary/10 px-2 py-1 rounded flex-shrink-0">
+                          <span className="material-symbols-outlined text-[12px]">lock_open</span> Free
+                        </span>
+                      )}
                     </div>
-                    {tut.isSecured ? (
-                      <span className="flex items-center gap-1 text-[10px] font-headline uppercase tracking-widest text-on-error-container bg-error-container/20 px-2 py-1 rounded flex-shrink-0">
-                        <span className="material-symbols-outlined text-[12px]">lock</span> Members Only
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-[10px] font-headline uppercase tracking-widest text-primary bg-primary/10 px-2 py-1 rounded flex-shrink-0">
-                        <span className="material-symbols-outlined text-[12px]">lock_open</span> Free
-                      </span>
-                    )}
+                    <p className="text-on-surface-variant text-sm font-body leading-relaxed">{tut.description}</p>
+                    <div className="flex items-center gap-3 pt-2">
+                      {tut.isSecured ? (
+                        <Link href="/login" className="flex items-center gap-2 text-xs font-headline font-bold uppercase tracking-widest text-primary hover:underline">
+                          <span className="material-symbols-outlined text-[14px]">login</span> Login to Access
+                        </Link>
+                      ) : (
+                        <a href={tut.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs font-headline font-bold uppercase tracking-widest text-primary hover:underline">
+                          <span className="material-symbols-outlined text-[14px]">{tut.type === "youtube" ? "play_circle" : "picture_as_pdf"}</span>
+                          {tut.type === "youtube" ? "Watch" : "Download PDF"}
+                        </a>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-on-surface-variant text-sm font-body leading-relaxed">{tut.description}</p>
-                  <div className="flex items-center gap-3 pt-2">
-                    {tut.isSecured ? (
-                      <Link href="/login" className="flex items-center gap-2 text-xs font-headline font-bold uppercase tracking-widest text-primary hover:underline">
-                        <span className="material-symbols-outlined text-[14px]">login</span> Login to Access
-                      </Link>
-                    ) : (
-                      <>
-                        {tut.youtubeLink && (
-                          <a href={tut.youtubeLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs font-headline font-bold uppercase tracking-widest text-primary hover:underline">
-                            <span className="material-symbols-outlined text-[14px]">play_circle</span> Watch
-                          </a>
-                        )}
-                        {tut.pdfUrl && (
-                          <a href={tut.pdfUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">
-                            <span className="material-symbols-outlined text-[14px]">picture_as_pdf</span> PDF
-                          </a>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </main>

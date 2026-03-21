@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { addBlog } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -12,6 +14,7 @@ const sidebarItems = [
 ];
 
 export default function NewBlogPost() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [content, setContent] = useState("");
@@ -56,10 +59,10 @@ export default function NewBlogPost() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    // TODO: call API route to persist to D1
-    await new Promise(r => setTimeout(r, 800));
+    addBlog({ title, slug, content, imageUrl, category: "" });
     setSaved(true);
     setSaving(false);
+    setTimeout(() => router.push("/admin/blogs"), 800);
   }
 
   return (
