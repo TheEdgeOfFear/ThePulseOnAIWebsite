@@ -18,9 +18,39 @@ export default function NewBlogPost() {
   const [imageUrl, setImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [imageMode, setImageMode] = useState<"upload" | "url">("upload");
 
   function generateSlug(t: string) {
     return t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  }
+
+  function handleFileSelect(file: File) {
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        setImageUrl(e.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -79,15 +109,101 @@ export default function NewBlogPost() {
                 placeholder="auto-generated-from-title"
               />
             </div>
+
+            {/* Cover Image - Upload or URL */}
             <div>
-              <label className="block font-headline text-xs uppercase tracking-widest text-on-surface-variant mb-2">Cover Image URL</label>
-              <input
-                value={imageUrl}
-                onChange={e => setImageUrl(e.target.value)}
-                className="w-full bg-surface-container-highest border-0 border-b-2 border-outline-variant text-on-surface focus:outline-none focus:border-primary px-4 py-3 font-body text-sm transition-all"
-                placeholder="https://..."
-              />
+              <div className="flex items-center justify-between mb-2">
+                <label className="block font-headline text-xs uppercase tracking-widest text-on-surface-variant">Cover Image</label>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setImageMode("upload")}
+                    className={`px-3 py-1 rounded font-headline text-[10px] uppercase tracking-widest transition-all ${
+                      imageMode === "upload" ? "bg-primary/20 text-primary" : "text-on-surface-variant hover:text-primary"
+                    }`}
+                  >
+                    Upload
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageMode("url")}
+                    className={`px-3 py-1 rounded font-headline text-[10px] uppercase tracking-widest transition-all ${
+                      imageMode === "url" ? "bg-primary/20 text-primary" : "text-on-surface-variant hover:text-primary"
+                    }`}
+                  >
+                    URL
+                  </button>
+                </div>
+              </div>
+
+              {imageMode === "upload" ? (
+                <>
+                  {/* Drag and Drop Zone */}
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    className={`relative rounded-xl border-2 border-dashed transition-all cursor-pointer ${
+                      isDragging
+                        ? "border-primary bg-primary/10"
+                        : imageUrl
+                        ? "border-primary/30 bg-surface-container"
+                        : "border-outline-variant/30 bg-surface-container-highest hover:border-primary/40 hover:bg-surface-container"
+                    }`}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={e => { if (e.target.files?.[0]) handleFileSelect(e.target.files[0]); }}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+
+                    {imageUrl ? (
+                      <div className="relative">
+                        <img src={imageUrl} alt="Cover preview" className="w-full h-48 object-cover rounded-xl" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-surface/80 to-transparent rounded-xl" />
+                        <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
+                          <span className="font-headline text-[10px] uppercase tracking-widest text-primary">✓ Image loaded</span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setImageUrl(""); }}
+                            className="flex items-center gap-1 px-3 py-1 bg-error/20 text-error rounded font-headline text-[10px] uppercase tracking-widest hover:bg-error/30 transition-all z-20 relative"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">delete</span> Remove
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-10 px-4">
+                        <span className="material-symbols-outlined text-4xl text-on-surface-variant/30 mb-3">cloud_upload</span>
+                        <p className="font-headline text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">
+                          {isDragging ? "Drop image here" : "Drag & drop or click to upload"}
+                        </p>
+                        <p className="text-[10px] text-on-surface-variant/50 font-body">PNG, JPG, GIF, WebP — Max 5MB</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <input
+                  value={imageUrl}
+                  onChange={e => setImageUrl(e.target.value)}
+                  className="w-full bg-surface-container-highest border-0 border-b-2 border-outline-variant text-on-surface focus:outline-none focus:border-primary px-4 py-3 font-body text-sm transition-all"
+                  placeholder="https://..."
+                />
+              )}
+
+              {/* Preview for URL mode */}
+              {imageMode === "url" && imageUrl && (
+                <div className="mt-3 relative rounded-xl overflow-hidden">
+                  <img src={imageUrl} alt="Cover preview" className="w-full h-48 object-cover rounded-xl" />
+                  <div className="absolute bottom-2 left-3">
+                    <span className="font-headline text-[10px] uppercase tracking-widest text-primary bg-surface/80 px-2 py-1 rounded">✓ Preview</span>
+                  </div>
+                </div>
+              )}
             </div>
+
             <div>
               <label className="block font-headline text-xs uppercase tracking-widest text-on-surface-variant mb-2">Content *</label>
               <textarea
