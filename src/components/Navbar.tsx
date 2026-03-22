@@ -11,6 +11,7 @@ const navLinks = [
   { label: "Blogs", href: "/blogs" },
   { label: "News", href: "/news" },
   { label: "Recommended", href: "/recommended" },
+  { label: "Bio", href: "/bio" },
 ];
 
 export default function Navbar() {
@@ -112,7 +113,7 @@ export default function Navbar() {
               }`}
             >
               <span className="material-symbols-outlined text-lg">
-                {link.label === "Feed" ? "dynamic_feed" : link.label === "Training" ? "school" : link.label === "Blogs" ? "article" : "newspaper"}
+                {link.label === "Feed" ? "dynamic_feed" : link.label === "Training" ? "school" : link.label === "Blogs" ? "article" : link.label === "Bio" ? "person" : link.label === "Recommended" ? "recommend" : "newspaper"}
               </span>
               {link.label}
             </Link>

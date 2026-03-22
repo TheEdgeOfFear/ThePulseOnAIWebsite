@@ -127,3 +127,35 @@ export function addRecommendation(r: Omit<Recommendation, "id" | "createdAt">): 
 }
 export function updateRecommendation(id: string, u: Partial<Recommendation>) { saveRecommendations(loadRecommendations().map(r => r.id === id ? { ...r, ...u } : r)); }
 export function deleteRecommendation(id: string) { saveRecommendations(loadRecommendations().filter(r => r.id !== id)); }
+
+// --- Bio ---
+
+export interface BioEntry {
+  id: string;
+  name: string;
+  role: string;
+  bio: string;
+  imageData: string; // base64 data URL
+  createdAt: string;
+}
+
+const defaultBios: BioEntry[] = [
+  {
+    id: "1",
+    name: "The Pulse On AI",
+    role: "Founder & Lead Analyst",
+    bio: "Dedicated to decoding the AI and Robotics frontier. Delivering precision-engineered intelligence, real-time data, and the blueprints of tomorrow to builders and thinkers worldwide.",
+    imageData: "",
+    createdAt: "2026-03-20",
+  },
+];
+
+export function loadBios(): BioEntry[] { return load<BioEntry>("pulse_bios", defaultBios); }
+export function saveBios(bios: BioEntry[]) { save("pulse_bios", bios); }
+export function addBio(b: Omit<BioEntry, "id" | "createdAt">): BioEntry {
+  const bios = loadBios();
+  const n: BioEntry = { ...b, id: Date.now().toString(), createdAt: new Date().toISOString().split("T")[0] };
+  bios.unshift(n); saveBios(bios); return n;
+}
+export function updateBio(id: string, u: Partial<BioEntry>) { saveBios(loadBios().map(b => b.id === id ? { ...b, ...u } : b)); }
+export function deleteBio(id: string) { saveBios(loadBios().filter(b => b.id !== id)); }

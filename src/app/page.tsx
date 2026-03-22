@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import BioPreview from "@/components/BioPreview";
 
 export default function Home() {
   return (
@@ -172,6 +173,9 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Bio Preview */}
+        <BioPreview />
+
         {/* Newsletter CTA */}
         <section className="py-16 sm:py-24 px-4 sm:px-8 mb-12">
           <div className="max-w-4xl mx-auto bg-primary-container/10 border border-primary/20 rounded-3xl p-6 sm:p-12 relative overflow-hidden text-center">
@@ -205,6 +209,7 @@ export default function Home() {
             <Link className="font-body text-sm text-[#f9f9f9]/60 hover:text-[#81ecff] transition-all" href="/news">Neural Network</Link>
             <Link className="font-body text-sm text-[#f9f9f9]/60 hover:text-[#81ecff] transition-all" href="/blogs">Documentation</Link>
             <Link className="font-body text-sm text-[#f9f9f9]/60 hover:text-[#81ecff] transition-all" href="/training">Training</Link>
+            <Link className="font-body text-sm text-[#f9f9f9]/60 hover:text-[#81ecff] transition-all" href="/bio">Bio</Link>
             <Link className="font-body text-sm text-[#f9f9f9]/60 hover:text-[#81ecff] transition-all" href="/login">Admin</Link>
           </div>
           <div className="font-body text-sm text-[#f9f9f9]/60">© 2026 THE PULSE ON AI.</div>
