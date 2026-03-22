@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "wrangler d1 migrations apply pulse-web-db --local"
+    "db:migrate": "wrangler d1 migrations apply pulse-web-db --local",
+    "db:migrate:remote": "npx wrangler d1 execute pulse-web-db --remote --file=./migrations/0001_create_tables.sql"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",

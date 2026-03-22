@@ -6,7 +6,35 @@ import { loadNews, type NewsArticle } from "@/lib/dataStore";
 
 export default function NewsPage() {
   const [allNews, setAllNews] = useState<NewsArticle[]>([]);
-  useEffect(() => { setAllNews(loadNews()); }, []);
+
+  useEffect(() => {
+    // Load from localStorage first (instant)
+    const localNews = loadNews();
+    setAllNews(localNews);
+
+    // Then fetch from D1 API and merge
+    fetch("/api/news")
+      .then(r => r.json())
+      .then(data => {
+        if (data.articles && Array.isArray(data.articles)) {
+          const dbArticles: NewsArticle[] = data.articles;
+          // Merge: combine both sources, deduplicate by ID
+          const localIds = new Set(localNews.map(n => n.id));
+          const merged = [...localNews];
+          for (const article of dbArticles) {
+            if (!localIds.has(article.id)) {
+              merged.push(article);
+            }
+          }
+          // Sort by date descending
+          merged.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+          setAllNews(merged);
+        }
+      })
+      .catch(() => {
+        // D1 not available, just use localStorage — that's fine
+      });
+  }, []);
 
   const featured = allNews[0];
   const rest = allNews.slice(1);
