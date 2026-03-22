@@ -1,13 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-const stats = [
-  { label: "Total Blogs", value: "0", icon: "article" },
-  { label: "News Articles", value: "0", icon: "newspaper" },
-  { label: "Tutorials", value: "0", icon: "school" },
-  { label: "Subscribers", value: "0", icon: "group" },
-];
+import { loadBlogs, loadNews, loadTutorials, loadRecommendations } from "@/lib/dataStore";
 
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -15,12 +9,29 @@ const navItems = [
   { label: "Blogs", href: "/admin/blogs", icon: "article" },
   { label: "News", href: "/admin/news", icon: "newspaper" },
   { label: "Recommended", href: "/admin/recommended", icon: "recommend" },
-  { label: "Bio", href: "/admin/bio", icon: "person" },
   { label: "Tutorials", href: "/admin/tutorials", icon: "school" },
   { label: "View Site", href: "/", icon: "open_in_new" },
 ];
 
 export default function AdminDashboard() {
+  const [counts, setCounts] = useState({ blogs: 0, news: 0, tutorials: 0, recommended: 0 });
+
+  useEffect(() => {
+    setCounts({
+      blogs: loadBlogs().length,
+      news: loadNews().length,
+      tutorials: loadTutorials().length,
+      recommended: loadRecommendations().length,
+    });
+  }, []);
+
+  const stats = [
+    { label: "Total Blogs", value: counts.blogs, icon: "article" },
+    { label: "News Articles", value: counts.news, icon: "newspaper" },
+    { label: "Tutorials", value: counts.tutorials, icon: "school" },
+    { label: "Recommended", value: counts.recommended, icon: "recommend" },
+  ];
+
   return (
     <div className="min-h-screen bg-surface flex">
       {/* Sidebar */}

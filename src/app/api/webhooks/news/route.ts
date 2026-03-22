@@ -33,11 +33,41 @@ function getDB(): Env["DB"] | null {
 
 export async function POST(req: NextRequest) {
   try {
-    // Auth check
+    // Auth check — supports both Bearer token and Basic Auth (email:password)
     const authHeader = req.headers.get("Authorization");
-    const secret = process.env.ACTIVEPIECES_WEBHOOK_SECRET || "secret";
-    if (authHeader !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!authHeader) {
+      return NextResponse.json({ error: "Missing Authorization header" }, { status: 401 });
+    }
+
+    let authorized = false;
+
+    // Option 1: Bearer token — matches ACTIVEPIECES_WEBHOOK_SECRET env var
+    if (authHeader.startsWith("Bearer ")) {
+      const token = authHeader.slice(7);
+      const secret = process.env.ACTIVEPIECES_WEBHOOK_SECRET;
+      if (secret && token === secret) {
+        authorized = true;
+      }
+    }
+
+    // Option 2: Basic Auth — matches WEBHOOK_AUTH_EMAIL + WEBHOOK_AUTH_PASSWORD env vars
+    // (Set these to the same email/password as an admin/editor account)
+    if (!authorized && authHeader.startsWith("Basic ")) {
+      try {
+        const decoded = atob(authHeader.slice(6));
+        const [email, password] = decoded.split(":");
+        const envEmail = process.env.WEBHOOK_AUTH_EMAIL;
+        const envPassword = process.env.WEBHOOK_AUTH_PASSWORD;
+        if (envEmail && envPassword && email === envEmail && password === envPassword) {
+          authorized = true;
+        }
+      } catch {
+        // Invalid base64
+      }
+    }
+
+    if (!authorized) {
+      return NextResponse.json({ error: "Unauthorized — invalid credentials" }, { status: 401 });
     }
 
     // Parse JSON body

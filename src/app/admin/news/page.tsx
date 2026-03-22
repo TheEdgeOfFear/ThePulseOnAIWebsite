@@ -66,11 +66,17 @@ export default function AdminNews() {
         </div>
 
         {/* Webhook reminder */}
-        <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6 flex items-center gap-4">
-          <span className="material-symbols-outlined text-primary">webhook</span>
-          <div>
-            <p className="font-headline text-xs font-bold text-primary uppercase tracking-widest">Activepieces Auto-Feed Active</p>
-            <p className="text-on-surface-variant text-xs font-body mt-0.5">POST to <span className="text-primary">/api/webhooks/news</span> with Authorization header to auto-publish</p>
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 mb-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-primary">webhook</span>
+            <p className="font-headline text-xs font-bold text-primary uppercase tracking-widest">Webhook API — Auto-Publish News</p>
+          </div>
+          <div className="text-on-surface-variant text-xs font-body space-y-2 ml-9">
+            <p><strong className="text-on-surface">Endpoint:</strong> <span className="text-primary font-mono">POST /api/webhooks/news</span></p>
+            <p><strong className="text-on-surface">JSON body:</strong> <span className="text-primary font-mono">{`{ "title", "content", "source", "image_url", "category" }`}</span></p>
+            <p className="text-on-surface font-bold mt-2">Auth (pick one):</p>
+            <p>• <strong>Bearer token:</strong> <span className="text-primary font-mono">Authorization: Bearer YOUR_SECRET</span> — set <span className="text-primary">ACTIVEPIECES_WEBHOOK_SECRET</span> in Cloudflare env vars</p>
+            <p>• <strong>Basic Auth:</strong> <span className="text-primary font-mono">Authorization: Basic base64(email:password)</span> — set <span className="text-primary">WEBHOOK_AUTH_EMAIL</span> + <span className="text-primary">WEBHOOK_AUTH_PASSWORD</span> in Cloudflare env vars (use same creds as an admin account)</p>
           </div>
         </div>
 
