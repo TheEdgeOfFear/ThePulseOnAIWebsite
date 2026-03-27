@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { addNews } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -23,14 +22,27 @@ export default function NewNews() {
   const [imageUrl, setImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    addNews({ title, summary: content, category: "General", source, imageUrl });
-    setSaved(true);
+    setError("");
+    try {
+      const res = await fetch("/api/news", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content, source, imageUrl, category: "General" }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => router.push("/admin/news"), 800);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to save.");
+      }
+    } catch { setError("Error saving. Check database connection."); }
     setSaving(false);
-    setTimeout(() => router.push("/admin/news"), 800);
   }
 
   return (
@@ -86,6 +98,7 @@ export default function NewNews() {
             </button>
             <Link href="/admin/news" className="px-8 py-4 bg-surface-container-highest text-on-surface-variant font-headline font-bold text-xs uppercase tracking-wider rounded-md hover:bg-surface-container transition-all">Cancel</Link>
             {saved && <span className="text-primary font-headline text-xs uppercase tracking-widest">✓ Published</span>}
+            {error && <span className="text-error font-headline text-xs uppercase tracking-widest">{error}</span>}
           </div>
         </form>
       </main>

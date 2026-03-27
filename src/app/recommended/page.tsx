@@ -2,7 +2,16 @@
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { loadRecommendations, type Recommendation } from "@/lib/dataStore";
+
+interface Recommendation {
+  id: string;
+  title: string;
+  url: string;
+  description: string;
+  useCase: string;
+  difficulty: "green" | "yellow" | "red";
+  createdAt: string;
+}
 
 const difficultyLabels = { green: "Easy to Use", yellow: "Medium Learning", red: "Advanced Learning" };
 const difficultyColors = {
@@ -15,7 +24,15 @@ const glowColors = { green: "shadow-green-500/20", yellow: "shadow-yellow-500/20
 
 export default function RecommendedPage() {
   const [recs, setRecs] = useState<Recommendation[]>([]);
-  useEffect(() => { setRecs(loadRecommendations()); }, []);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/recommendations")
+      .then(r => r.json())
+      .then(data => { if (data.recommendations) setRecs(data.recommendations); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <>
@@ -48,7 +65,9 @@ export default function RecommendedPage() {
 
         {/* Recommendations Grid */}
         <section className="px-4 md:px-8 max-w-7xl mx-auto pb-24">
-          {recs.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20 text-on-surface-variant font-body">Loading recommendations...</div>
+          ) : recs.length === 0 ? (
             <div className="text-center py-20 text-on-surface-variant font-body">No recommendations yet.</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

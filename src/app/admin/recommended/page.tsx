@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { loadRecommendations, addRecommendation, deleteRecommendation, type Recommendation } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -14,6 +13,16 @@ const sidebarItems = [
   { label: "View Site", href: "/", icon: "open_in_new" },
 ];
 
+interface Recommendation {
+  id: string;
+  title: string;
+  url: string;
+  description: string;
+  useCase: string;
+  difficulty: "green" | "yellow" | "red";
+  createdAt: string;
+}
+
 const difficultyLabels = { green: "Easy to Use", yellow: "Medium Learning", red: "Advanced" };
 const difficultyColors = {
   green: "bg-green-500/20 text-green-400 border-green-500/30",
@@ -24,6 +33,7 @@ const dotColors = { green: "bg-green-500", yellow: "bg-yellow-500", red: "bg-red
 
 export default function AdminRecommended() {
   const [recs, setRecs] = useState<Recommendation[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
@@ -31,25 +41,51 @@ export default function AdminRecommended() {
   const [useCase, setUseCase] = useState("");
   const [difficulty, setDifficulty] = useState<"green" | "yellow" | "red">("green");
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => { setRecs(loadRecommendations()); }, []);
+  function fetchRecs() {
+    setLoading(true);
+    fetch("/api/recommendations")
+      .then(res => res.json())
+      .then(data => { if (data.recommendations) setRecs(data.recommendations); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => { fetchRecs(); }, []);
 
   function resetForm() {
     setTitle(""); setUrl(""); setDescription(""); setUseCase(""); setDifficulty("green");
-    setShowForm(false); setSaved(false);
+    setShowForm(false); setSaved(false); setError("");
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    addRecommendation({ title, url, description, useCase, difficulty });
-    setRecs(loadRecommendations());
-    setSaved(true);
-    setTimeout(() => resetForm(), 800);
+    setError("");
+    try {
+      const res = await fetch("/api/recommendations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, url, description, useCase, difficulty }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        fetchRecs();
+        setTimeout(() => resetForm(), 800);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to save.");
+      }
+    } catch { setError("Error saving. Check database connection."); }
   }
 
-  function handleDelete(id: string) {
-    deleteRecommendation(id);
-    setRecs(loadRecommendations());
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this recommendation?")) return;
+    try {
+      const res = await fetch(`/api/recommendations?id=${id}`, { method: "DELETE" });
+      if (res.ok) fetchRecs();
+      else alert("Failed to delete.");
+    } catch { alert("Error deleting."); }
   }
 
   return (
@@ -131,6 +167,7 @@ export default function AdminRecommended() {
                 </button>
                 <button type="button" onClick={resetForm} className="px-8 py-4 bg-surface-container-highest text-on-surface-variant font-headline font-bold text-xs uppercase tracking-wider rounded-md hover:bg-surface-container transition-all">Cancel</button>
                 {saved && <span className="text-primary font-headline text-xs uppercase tracking-widest">✓ Saved</span>}
+                {error && <span className="text-error font-headline text-xs uppercase tracking-widest">{error}</span>}
               </div>
             </form>
           </div>
@@ -145,26 +182,29 @@ export default function AdminRecommended() {
             <div className="col-span-2 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Difficulty</div>
             <div className="col-span-2 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Actions</div>
           </div>
-          {recs.map((rec, i) => (
-            <div key={rec.id} className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors ${i < recs.length - 1 ? 'border-b border-outline-variant/10' : ''}`}>
-              <div className="col-span-3">
-                <a href={rec.url} target="_blank" rel="noopener noreferrer" className="font-headline text-sm font-medium text-primary hover:underline">{rec.title}</a>
+          {loading ? (
+            <div className="px-6 py-12 text-center text-on-surface-variant font-body text-sm">Loading...</div>
+          ) : recs.length === 0 ? (
+            <div className="px-6 py-12 text-center text-on-surface-variant font-body text-sm">No recommendations yet. Click &quot;Add Recommendation&quot; to get started.</div>
+          ) : (
+            recs.map((rec, i) => (
+              <div key={rec.id} className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors ${i < recs.length - 1 ? 'border-b border-outline-variant/10' : ''}`}>
+                <div className="col-span-3">
+                  <a href={rec.url} target="_blank" rel="noopener noreferrer" className="font-headline text-sm font-medium text-primary hover:underline">{rec.title}</a>
+                </div>
+                <div className="col-span-3 font-body text-xs text-on-surface-variant line-clamp-2">{rec.description}</div>
+                <div className="col-span-2 font-body text-xs text-on-surface-variant line-clamp-2">{rec.useCase}</div>
+                <div className="col-span-2">
+                  <span className={`inline-flex items-center gap-2 px-2 py-1 rounded font-headline text-[10px] uppercase tracking-widest ${difficultyColors[rec.difficulty]}`}>
+                    <span className={`w-2 h-2 rounded-full ${dotColors[rec.difficulty]}`} />
+                    {difficultyLabels[rec.difficulty]}
+                  </span>
+                </div>
+                <div className="col-span-2 flex items-center gap-2">
+                  <button onClick={() => handleDelete(rec.id)} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
+                </div>
               </div>
-              <div className="col-span-3 font-body text-xs text-on-surface-variant line-clamp-2">{rec.description}</div>
-              <div className="col-span-2 font-body text-xs text-on-surface-variant line-clamp-2">{rec.useCase}</div>
-              <div className="col-span-2">
-                <span className={`inline-flex items-center gap-2 px-2 py-1 rounded font-headline text-[10px] uppercase tracking-widest ${difficultyColors[rec.difficulty]}`}>
-                  <span className={`w-2 h-2 rounded-full ${dotColors[rec.difficulty]}`} />
-                  {difficultyLabels[rec.difficulty]}
-                </span>
-              </div>
-              <div className="col-span-2 flex items-center gap-2">
-                <button onClick={() => handleDelete(rec.id)} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
-              </div>
-            </div>
-          ))}
-          {recs.length === 0 && (
-            <div className="px-6 py-12 text-center text-on-surface-variant font-body text-sm">No recommendations yet. Click "Add Recommendation" to get started.</div>
+            ))
           )}
         </div>
       </main>

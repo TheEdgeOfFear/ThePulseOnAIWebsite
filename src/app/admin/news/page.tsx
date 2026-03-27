@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { loadNews, deleteNews, type NewsArticle } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -14,13 +13,38 @@ const sidebarItems = [
   { label: "View Site", href: "/", icon: "open_in_new" },
 ];
 
+interface NewsArticle {
+  id: string;
+  title: string;
+  summary: string;
+  category: string;
+  source: string;
+  imageUrl: string;
+  createdAt: string;
+}
+
 export default function AdminNews() {
   const [news, setNews] = useState<NewsArticle[]>([]);
-  useEffect(() => { setNews(loadNews()); }, []);
+  const [loading, setLoading] = useState(true);
 
-  function handleDelete(id: string) {
-    deleteNews(id);
-    setNews(loadNews());
+  function fetchNews() {
+    setLoading(true);
+    fetch("/api/news")
+      .then(res => res.json())
+      .then(data => { if (data.articles) setNews(data.articles); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => { fetchNews(); }, []);
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this news article?")) return;
+    try {
+      const res = await fetch(`/api/news?id=${id}`, { method: "DELETE" });
+      if (res.ok) fetchNews();
+      else alert("Failed to delete.");
+    } catch { alert("Error deleting."); }
   }
 
   return (
@@ -87,20 +111,24 @@ export default function AdminNews() {
             <div className="col-span-2 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Date</div>
             <div className="col-span-2 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Actions</div>
           </div>
-          {news.map((item, i) => (
-            <div key={item.id} className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors ${i < news.length - 1 ? 'border-b border-outline-variant/10' : ''}`}>
-              <div className="col-span-6 font-headline text-sm font-medium text-on-surface">{item.title}</div>
-              <div className="col-span-2 font-headline text-xs text-primary">{item.source}</div>
-              <div className="col-span-2 font-headline text-xs text-on-surface-variant">{item.createdAt}</div>
-              <div className="col-span-2 flex items-center gap-2">
-                <Link href={`/admin/news/${item.id}/edit`} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-primary transition-colors">edit</Link>
-                <button onClick={() => handleDelete(item.id)} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
+          {loading ? (
+            <div className="px-6 py-8 text-center text-on-surface-variant font-body text-sm">Loading...</div>
+          ) : news.length === 0 ? (
+            <div className="px-6 py-8 text-center text-on-surface-variant font-body text-sm">No news articles yet.</div>
+          ) : (
+            news.map((item, i) => (
+              <div key={item.id} className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors ${i < news.length - 1 ? 'border-b border-outline-variant/10' : ''}`}>
+                <div className="col-span-6 font-headline text-sm font-medium text-on-surface">{item.title}</div>
+                <div className="col-span-2 font-headline text-xs text-primary">{item.source}</div>
+                <div className="col-span-2 font-headline text-xs text-on-surface-variant">{item.createdAt}</div>
+                <div className="col-span-2 flex items-center gap-2">
+                  <button onClick={() => handleDelete(item.id)} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </main>
     </div>
   );
 }
-

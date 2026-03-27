@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { loadBios, addBio, deleteBio, type BioEntry } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -14,21 +13,41 @@ const sidebarItems = [
   { label: "View Site", href: "/", icon: "open_in_new" },
 ];
 
+interface BioEntry {
+  id: string;
+  name: string;
+  role: string;
+  bio: string;
+  imageData: string;
+  createdAt: string;
+}
+
 export default function AdminBio() {
   const [bios, setBios] = useState<BioEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [bio, setBio] = useState("");
   const [imageData, setImageData] = useState("");
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { setBios(loadBios()); }, []);
+  function fetchBios() {
+    setLoading(true);
+    fetch("/api/bios")
+      .then(res => res.json())
+      .then(data => { if (data.bios) setBios(data.bios); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => { fetchBios(); }, []);
 
   function resetForm() {
     setName(""); setRole(""); setBio(""); setImageData("");
-    setShowForm(false); setSaved(false);
+    setShowForm(false); setSaved(false); setError("");
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -40,17 +59,33 @@ export default function AdminBio() {
     reader.readAsDataURL(file);
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    addBio({ name, role, bio, imageData });
-    setBios(loadBios());
-    setSaved(true);
-    setTimeout(() => resetForm(), 800);
+    setError("");
+    try {
+      const res = await fetch("/api/bios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, role, bio, imageData }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        fetchBios();
+        setTimeout(() => resetForm(), 800);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to save.");
+      }
+    } catch { setError("Error saving. Check database connection."); }
   }
 
-  function handleDelete(id: string) {
-    deleteBio(id);
-    setBios(loadBios());
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this bio entry?")) return;
+    try {
+      const res = await fetch(`/api/bios?id=${id}`, { method: "DELETE" });
+      if (res.ok) fetchBios();
+      else alert("Failed to delete.");
+    } catch { alert("Error deleting."); }
   }
 
   return (
@@ -124,6 +159,7 @@ export default function AdminBio() {
                 </button>
                 <button type="button" onClick={resetForm} className="px-8 py-4 bg-surface-container-highest text-on-surface-variant font-headline font-bold text-xs uppercase tracking-wider rounded-md hover:bg-surface-container transition-all">Cancel</button>
                 {saved && <span className="text-primary font-headline text-xs uppercase tracking-widest">✓ Saved</span>}
+                {error && <span className="text-error font-headline text-xs uppercase tracking-widest">{error}</span>}
               </div>
             </form>
           </div>
@@ -138,27 +174,30 @@ export default function AdminBio() {
             <div className="col-span-5 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Bio</div>
             <div className="col-span-2 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Actions</div>
           </div>
-          {bios.map((entry, i) => (
-            <div key={entry.id} className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors ${i < bios.length - 1 ? 'border-b border-outline-variant/10' : ''}`}>
-              <div className="col-span-1">
-                {entry.imageData ? (
-                  <img src={entry.imageData} alt={entry.name} className="w-10 h-10 rounded-full object-cover border border-outline-variant/20" />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary text-[18px]">person</span>
-                  </div>
-                )}
-              </div>
-              <div className="col-span-2 font-headline text-sm font-medium text-on-surface">{entry.name}</div>
-              <div className="col-span-2 font-body text-xs text-primary">{entry.role}</div>
-              <div className="col-span-5 font-body text-xs text-on-surface-variant line-clamp-2">{entry.bio}</div>
-              <div className="col-span-2 flex items-center gap-2">
-                <button onClick={() => handleDelete(entry.id)} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
-              </div>
-            </div>
-          ))}
-          {bios.length === 0 && (
+          {loading ? (
+            <div className="px-6 py-12 text-center text-on-surface-variant font-body text-sm">Loading...</div>
+          ) : bios.length === 0 ? (
             <div className="px-6 py-12 text-center text-on-surface-variant font-body text-sm">No bio entries yet. Click &quot;Add Bio&quot; to get started.</div>
+          ) : (
+            bios.map((entry, i) => (
+              <div key={entry.id} className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors ${i < bios.length - 1 ? 'border-b border-outline-variant/10' : ''}`}>
+                <div className="col-span-1">
+                  {entry.imageData ? (
+                    <img src={entry.imageData} alt={entry.name} className="w-10 h-10 rounded-full object-cover border border-outline-variant/20" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary text-[18px]">person</span>
+                    </div>
+                  )}
+                </div>
+                <div className="col-span-2 font-headline text-sm font-medium text-on-surface">{entry.name}</div>
+                <div className="col-span-2 font-body text-xs text-primary">{entry.role}</div>
+                <div className="col-span-5 font-body text-xs text-on-surface-variant line-clamp-2">{entry.bio}</div>
+                <div className="col-span-2 flex items-center gap-2">
+                  <button onClick={() => handleDelete(entry.id)} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </main>

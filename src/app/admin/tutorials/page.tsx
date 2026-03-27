@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { loadTutorials, deleteTutorial, type Tutorial } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -14,13 +13,38 @@ const sidebarItems = [
   { label: "View Site", href: "/", icon: "open_in_new" },
 ];
 
+interface Tutorial {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  url: string;
+  isSecured: boolean;
+  createdAt: string;
+}
+
 export default function AdminTutorials() {
   const [tutorials, setTutorials] = useState<Tutorial[]>([]);
-  useEffect(() => { setTutorials(loadTutorials()); }, []);
+  const [loading, setLoading] = useState(true);
 
-  function handleDelete(id: string) {
-    deleteTutorial(id);
-    setTutorials(loadTutorials());
+  function fetchTutorials() {
+    setLoading(true);
+    fetch("/api/tutorials")
+      .then(res => res.json())
+      .then(data => { if (data.tutorials) setTutorials(data.tutorials); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => { fetchTutorials(); }, []);
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this tutorial?")) return;
+    try {
+      const res = await fetch(`/api/tutorials?id=${id}`, { method: "DELETE" });
+      if (res.ok) fetchTutorials();
+      else alert("Failed to delete.");
+    } catch { alert("Error deleting."); }
   }
 
   return (
@@ -64,33 +88,37 @@ export default function AdminTutorials() {
             <div className="col-span-2 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Type</div>
             <div className="col-span-2 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Access</div>
             <div className="col-span-2 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Date</div>
-            <div className="col-span-1 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Edit</div>
+            <div className="col-span-1 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Actions</div>
           </div>
-          {tutorials.map((tut, i) => (
-            <div key={tut.id} className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors ${i < tutorials.length - 1 ? 'border-b border-outline-variant/10' : ''}`}>
-              <div className="col-span-5 font-headline text-sm font-medium text-on-surface">{tut.title}</div>
-              <div className="col-span-2 font-headline text-xs text-primary">{tut.type}</div>
-              <div className="col-span-2">
-                {tut.isSecured ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-error-container/20 text-on-error-container rounded font-headline text-[10px] uppercase tracking-widest">
-                    <span className="material-symbols-outlined text-[12px]">lock</span> Login Required
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded font-headline text-[10px] uppercase tracking-widest">
-                    <span className="material-symbols-outlined text-[12px]">lock_open</span> Public
-                  </span>
-                )}
+          {loading ? (
+            <div className="px-6 py-8 text-center text-on-surface-variant font-body text-sm">Loading...</div>
+          ) : tutorials.length === 0 ? (
+            <div className="px-6 py-8 text-center text-on-surface-variant font-body text-sm">No tutorials yet.</div>
+          ) : (
+            tutorials.map((tut, i) => (
+              <div key={tut.id} className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors ${i < tutorials.length - 1 ? 'border-b border-outline-variant/10' : ''}`}>
+                <div className="col-span-5 font-headline text-sm font-medium text-on-surface">{tut.title}</div>
+                <div className="col-span-2 font-headline text-xs text-primary">{tut.type}</div>
+                <div className="col-span-2">
+                  {tut.isSecured ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-error-container/20 text-on-error-container rounded font-headline text-[10px] uppercase tracking-widest">
+                      <span className="material-symbols-outlined text-[12px]">lock</span> Login Required
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded font-headline text-[10px] uppercase tracking-widest">
+                      <span className="material-symbols-outlined text-[12px]">lock_open</span> Public
+                    </span>
+                  )}
+                </div>
+                <div className="col-span-2 font-headline text-xs text-on-surface-variant">{tut.createdAt}</div>
+                <div className="col-span-1 flex items-center gap-2">
+                  <button onClick={() => handleDelete(tut.id)} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
+                </div>
               </div>
-              <div className="col-span-2 font-headline text-xs text-on-surface-variant">{tut.createdAt}</div>
-              <div className="col-span-1 flex items-center gap-2">
-                <Link href={`/admin/tutorials/${tut.id}/edit`} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-primary transition-colors">edit</Link>
-                <button onClick={() => handleDelete(tut.id)} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </main>
     </div>
   );
 }
-

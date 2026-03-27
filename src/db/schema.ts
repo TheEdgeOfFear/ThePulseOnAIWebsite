@@ -96,3 +96,26 @@ export const tutorials = sqliteTable("tutorials", {
   isSecured: integer("isSecured", { mode: "boolean" }).notNull().default(false),
   createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
 })
+
+export const recommendations = sqliteTable("recommendations", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  title: text("title").notNull(),
+  url: text("url").notNull(),
+  description: text("description").notNull(),
+  useCase: text("use_case").notNull(),
+  difficulty: text("difficulty").notNull().default("green"),
+  createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
+})
+
+export const bios = sqliteTable("bios", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  role: text("role").notNull(),
+  bio: text("bio").notNull(),
+  imageData: text("image_data"),
+  createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
+})

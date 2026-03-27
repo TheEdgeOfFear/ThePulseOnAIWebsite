@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { addTutorial } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -24,16 +23,27 @@ export default function NewTutorial() {
   const [isSecured, setIsSecured] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    const type = youtubeLink ? "youtube" : "pdf";
-    const url = youtubeLink || pdfUrl;
-    addTutorial({ title, description, type, url, isSecured });
-    setSaved(true);
+    setError("");
+    try {
+      const res = await fetch("/api/tutorials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description, youtubeLink, pdfUrl, isSecured }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => router.push("/admin/tutorials"), 800);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to save.");
+      }
+    } catch { setError("Error saving. Check database connection."); }
     setSaving(false);
-    setTimeout(() => router.push("/admin/tutorials"), 800);
   }
 
   return (
@@ -111,6 +121,7 @@ export default function NewTutorial() {
             </button>
             <Link href="/admin/tutorials" className="px-8 py-4 bg-surface-container-highest text-on-surface-variant font-headline font-bold text-xs uppercase tracking-wider rounded-md hover:bg-surface-container transition-all">Cancel</Link>
             {saved && <span className="text-primary font-headline text-xs uppercase tracking-widest">✓ Saved</span>}
+            {error && <span className="text-error font-headline text-xs uppercase tracking-widest">{error}</span>}
           </div>
         </form>
       </main>

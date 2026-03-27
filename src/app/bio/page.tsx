@@ -2,11 +2,27 @@
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { loadBios, type BioEntry } from "@/lib/dataStore";
+
+interface BioEntry {
+  id: string;
+  name: string;
+  role: string;
+  bio: string;
+  imageData: string;
+  createdAt: string;
+}
 
 export default function BioPage() {
   const [bios, setBios] = useState<BioEntry[]>([]);
-  useEffect(() => { setBios(loadBios()); }, []);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/bios")
+      .then(r => r.json())
+      .then(data => { if (data.bios) setBios(data.bios); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <>
@@ -26,7 +42,9 @@ export default function BioPage() {
 
         {/* Bio Cards */}
         <section className="px-4 md:px-8 max-w-7xl mx-auto pb-24">
-          {bios.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20 text-on-surface-variant font-body">Loading...</div>
+          ) : bios.length === 0 ? (
             <div className="text-center py-20 text-on-surface-variant font-body">No bio entries yet.</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

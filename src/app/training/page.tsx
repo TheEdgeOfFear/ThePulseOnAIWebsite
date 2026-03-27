@@ -2,11 +2,28 @@
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { loadTutorials, type Tutorial } from "@/lib/dataStore";
+
+interface Tutorial {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  url: string;
+  isSecured: boolean;
+  createdAt: string;
+}
 
 export default function TrainingPage() {
   const [tutorials, setTutorials] = useState<Tutorial[]>([]);
-  useEffect(() => { setTutorials(loadTutorials()); }, []);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/tutorials")
+      .then(r => r.json())
+      .then(data => { if (data.tutorials) setTutorials(data.tutorials); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <>
@@ -42,7 +59,9 @@ export default function TrainingPage() {
         <section className="py-16 px-8 bg-surface-container-low">
           <div className="max-w-7xl mx-auto">
             <h2 className="font-headline text-3xl font-bold tracking-tight mb-10">All Modules</h2>
-            {tutorials.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-20 text-on-surface-variant font-body">Loading tutorials...</div>
+            ) : tutorials.length === 0 ? (
               <div className="text-center py-20 text-on-surface-variant font-body">No tutorials yet. Create one from the admin panel.</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
