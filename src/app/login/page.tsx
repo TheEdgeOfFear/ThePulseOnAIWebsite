@@ -7,6 +7,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -81,14 +82,23 @@ export default function LoginPage() {
               <label className="block font-headline text-xs uppercase tracking-widest text-on-surface-variant mb-2">
                 Password
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full bg-surface-container-highest border-0 border-b-2 border-outline-variant text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary px-4 py-3 font-body text-sm transition-all"
-                placeholder="••••••••"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="w-full bg-surface-container-highest border-0 border-b-2 border-outline-variant text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary px-4 py-3 pr-12 font-body text-sm transition-all"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-[20px] text-on-surface-variant hover:text-primary transition-colors"
+                >
+                  {showPassword ? "visibility_off" : "visibility"}
+                </button>
+              </div>
             </div>
 
             {error && (
