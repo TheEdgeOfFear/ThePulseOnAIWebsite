@@ -2,11 +2,30 @@
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { loadBlogs, type BlogPost } from "@/lib/dataStore";
+
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  imageUrl: string;
+  category: string;
+  createdAt: string;
+}
 
 export default function BlogsPage() {
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
-  useEffect(() => { setBlogs(loadBlogs()); }, []);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/blogs")
+      .then(res => res.json())
+      .then(data => {
+        if (data.blogs) setBlogs(data.blogs);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <>
@@ -24,7 +43,9 @@ export default function BlogsPage() {
         </section>
 
         <section className="py-8 px-8 max-w-7xl mx-auto pb-24">
-          {blogs.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20 text-on-surface-variant font-body">Loading blog posts...</div>
+          ) : blogs.length === 0 ? (
             <div className="text-center py-20 text-on-surface-variant font-body">No blog posts yet. Create one from the admin panel.</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12">

@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { loadBlogs, deleteBlog, type BlogPost } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -14,13 +13,45 @@ const sidebarItems = [
   { label: "View Site", href: "/", icon: "open_in_new" },
 ];
 
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  imageUrl: string;
+  category: string;
+  createdAt: string;
+}
+
 export default function AdminBlogs() {
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
-  useEffect(() => { setBlogs(loadBlogs()); }, []);
+  const [loading, setLoading] = useState(true);
 
-  function handleDelete(id: string) {
-    deleteBlog(id);
-    setBlogs(loadBlogs());
+  function fetchBlogs() {
+    setLoading(true);
+    fetch("/api/blogs")
+      .then(res => res.json())
+      .then(data => {
+        if (data.blogs) setBlogs(data.blogs);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => { fetchBlogs(); }, []);
+
+  async function handleDelete(id: string) {
+    if (!confirm("Are you sure you want to delete this blog post?")) return;
+    try {
+      const res = await fetch(`/api/blogs?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchBlogs();
+      } else {
+        alert("Failed to delete blog post.");
+      }
+    } catch {
+      alert("Error deleting blog post.");
+    }
   }
 
   return (
@@ -60,25 +91,29 @@ export default function AdminBlogs() {
 
         <div className="bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden">
           <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-outline-variant/10">
-            <div className="col-span-6 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Title</div>
+            <div className="col-span-5 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Title</div>
             <div className="col-span-3 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Slug</div>
             <div className="col-span-2 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Date</div>
-            <div className="col-span-1 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Actions</div>
+            <div className="col-span-2 font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Actions</div>
           </div>
-          {blogs.map((blog, i) => (
-            <div key={blog.id} className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors ${i < blogs.length - 1 ? 'border-b border-outline-variant/10' : ''}`}>
-              <div className="col-span-6 font-headline text-sm font-medium text-on-surface">{blog.title}</div>
-              <div className="col-span-3 font-headline text-xs text-on-surface-variant">{blog.slug}</div>
-              <div className="col-span-2 font-headline text-xs text-on-surface-variant">{blog.createdAt}</div>
-              <div className="col-span-1 flex items-center gap-2">
-                <Link href={`/admin/blogs/${blog.id}/edit`} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-primary transition-colors">edit</Link>
-                <button onClick={() => handleDelete(blog.id)} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
+          {loading ? (
+            <div className="px-6 py-8 text-center text-on-surface-variant font-body text-sm">Loading...</div>
+          ) : blogs.length === 0 ? (
+            <div className="px-6 py-8 text-center text-on-surface-variant font-body text-sm">No blog posts yet.</div>
+          ) : (
+            blogs.map((blog, i) => (
+              <div key={blog.id} className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-container transition-colors ${i < blogs.length - 1 ? 'border-b border-outline-variant/10' : ''}`}>
+                <div className="col-span-5 font-headline text-sm font-medium text-on-surface">{blog.title}</div>
+                <div className="col-span-3 font-headline text-xs text-on-surface-variant">{blog.slug}</div>
+                <div className="col-span-2 font-headline text-xs text-on-surface-variant">{blog.createdAt}</div>
+                <div className="col-span-2 flex items-center gap-2">
+                  <button onClick={() => handleDelete(blog.id)} className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-error transition-colors">delete</button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </main>
     </div>
   );
 }
-

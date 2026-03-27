@@ -81,6 +81,7 @@ export const blogs = sqliteTable("blogs", {
   slug: text("slug").unique().notNull(),
   content: text("content").notNull(),
   imageUrl: text("image_url"),
+  category: text("category"),
   createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
 })
 

@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { addBlog } from "@/lib/dataStore";
 
 const sidebarItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -21,10 +20,12 @@ export default function NewBlogPost() {
   const [slug, setSlug] = useState("");
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [category, setCategory] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [imageMode, setImageMode] = useState<"upload" | "url">("upload");
+  const [error, setError] = useState("");
 
   function generateSlug(t: string) {
     return t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -61,10 +62,24 @@ export default function NewBlogPost() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    addBlog({ title, slug, content, imageUrl, category: "" });
-    setSaved(true);
+    setError("");
+    try {
+      const res = await fetch("/api/blogs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, slug, content, imageUrl, category }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => router.push("/admin/blogs"), 800);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to save blog post.");
+      }
+    } catch {
+      setError("Error saving blog post. Make sure the database is set up.");
+    }
     setSaving(false);
-    setTimeout(() => router.push("/admin/blogs"), 800);
   }
 
   return (
@@ -112,6 +127,15 @@ export default function NewBlogPost() {
                 onChange={e => setSlug(e.target.value)}
                 className="w-full bg-surface-container-highest border-0 border-b-2 border-outline-variant text-on-surface focus:outline-none focus:border-primary px-4 py-3 font-body text-sm transition-all text-primary"
                 placeholder="auto-generated-from-title"
+              />
+            </div>
+            <div>
+              <label className="block font-headline text-xs uppercase tracking-widest text-on-surface-variant mb-2">Category</label>
+              <input
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+                className="w-full bg-surface-container-highest border-0 border-b-2 border-outline-variant text-on-surface focus:outline-none focus:border-primary px-4 py-3 font-body text-sm transition-all"
+                placeholder="e.g. AI Research, Robotics, Quantum AI"
               />
             </div>
 
@@ -231,6 +255,7 @@ export default function NewBlogPost() {
               Cancel
             </Link>
             {saved && <span className="text-primary font-headline text-xs uppercase tracking-widest">✓ Saved successfully</span>}
+            {error && <span className="text-error font-headline text-xs uppercase tracking-widest">{error}</span>}
           </div>
         </form>
       </main>
