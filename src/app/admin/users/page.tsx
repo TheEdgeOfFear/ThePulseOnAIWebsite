@@ -40,16 +40,17 @@ function saveUsers(users: AdminUser[]) {
 }
 
 export default function AdminUsers() {
-  const [users, setUsers] = useState<AdminUser[]>(defaultUsers);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setUsers(loadUsers());
+    const loadedUsers = loadUsers();
+    setUsers(loadedUsers);
     setLoaded(true);
   }, []);
 
   useEffect(() => {
-    if (loaded) saveUsers(users);
+    if (loaded && users.length > 0) saveUsers(users);
   }, [users, loaded]);
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
