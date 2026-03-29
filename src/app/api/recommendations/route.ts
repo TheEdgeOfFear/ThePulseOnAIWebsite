@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-
-export const runtime = "edge";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 interface RecRow {
   id: string;
@@ -24,10 +23,8 @@ interface Env {
 
 function getDB(): Env["DB"] | null {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getRequestContext } = require("@cloudflare/next-on-pages");
-    const { env } = getRequestContext();
-    return env.DB;
+    const { env } = getCloudflareContext();
+    return (env as unknown as Env).DB;
   } catch { return null; }
 }
 
