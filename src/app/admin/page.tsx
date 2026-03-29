@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { loadBlogs, loadNews, loadTutorials, loadRecommendations } from "@/lib/dataStore";
 
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
@@ -17,11 +16,18 @@ export default function AdminDashboard() {
   const [counts, setCounts] = useState({ blogs: 0, news: 0, tutorials: 0, recommended: 0 });
 
   useEffect(() => {
-    setCounts({
-      blogs: loadBlogs().length,
-      news: loadNews().length,
-      tutorials: loadTutorials().length,
-      recommended: loadRecommendations().length,
+    Promise.all([
+      fetch("/api/blogs").then(res => res.json()).catch(() => ({ blogs: [] })),
+      fetch("/api/news").then(res => res.json()).catch(() => ({ articles: [] })),
+      fetch("/api/tutorials").then(res => res.json()).catch(() => ({ tutorials: [] })),
+      fetch("/api/recommendations").then(res => res.json()).catch(() => ({ recommendations: [] }))
+    ]).then(([blogs, news, tutorials, recommended]) => {
+      setCounts({
+        blogs: blogs.blogs?.length || 0,
+        news: news.articles?.length || 0,
+        tutorials: tutorials.tutorials?.length || 0,
+        recommended: recommended.recommendations?.length || 0,
+      });
     });
   }, []);
 

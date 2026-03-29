@@ -1,11 +1,25 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { loadBios, type BioEntry } from "@/lib/dataStore";
+
+type BioEntry = {
+  id: string;
+  name: string;
+  role: string;
+  bio: string;
+  imageData: string;
+};
 
 export default function BioPreview() {
   const [bios, setBios] = useState<BioEntry[]>([]);
-  useEffect(() => { setBios(loadBios()); }, []);
+  useEffect(() => {
+    fetch("/api/bios")
+      .then(res => res.json())
+      .then(data => {
+        if (data.bios) setBios(data.bios);
+      })
+      .catch(console.error);
+  }, []);
 
   if (bios.length === 0) return null;
 
