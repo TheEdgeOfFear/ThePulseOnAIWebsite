@@ -8,7 +8,7 @@ interface D1Result {
   meta: unknown;
 }
 
-interface Env {
+interface CloudflareEnv {
   DB: {
     prepare: (query: string) => {
       bind: (...values: unknown[]) => {
@@ -16,16 +16,17 @@ interface Env {
       };
     };
   };
+  ACTIVEPIECES_WEBHOOK_SECRET?: string;
+  WEBHOOK_AUTH_EMAIL?: string;
+  WEBHOOK_AUTH_PASSWORD?: string;
 }
 
-function getDB(): Env["DB"] | null {
+function getCfEnv(): CloudflareEnv | null {
   try {
-    // On Cloudflare Pages with @cloudflare/next-on-pages, 
-    // the D1 binding is available via getRequestContext
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getRequestContext } = require("@cloudflare/next-on-pages");
     const { env } = getRequestContext();
-    return env.DB;
+    return env as CloudflareEnv;
   } catch {
     return null;
   }
@@ -33,10 +34,21 @@ function getDB(): Env["DB"] | null {
 
 export async function POST(req: NextRequest) {
   try {
-    // Auth check — supports both Bearer token and Basic Auth (email:password)
+    const cfEnv = getCfEnv();
+    if (!cfEnv) {
+      return NextResponse.json(
+        { error: "Cloudflare environment not available" },
+        { status: 503 }
+      );
+    }
+
+    // Auth check — supports both Bearer token and Basic Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return NextResponse.json({ error: "Missing Authorization header" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Missing Authorization header" },
+        { status: 401 }
+      );
     }
 
     let authorized = false;
@@ -44,20 +56,19 @@ export async function POST(req: NextRequest) {
     // Option 1: Bearer token — matches ACTIVEPIECES_WEBHOOK_SECRET env var
     if (authHeader.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
-      const secret = process.env.ACTIVEPIECES_WEBHOOK_SECRET;
+      const secret = cfEnv.ACTIVEPIECES_WEBHOOK_SECRET;
       if (secret && token === secret) {
         authorized = true;
       }
     }
 
     // Option 2: Basic Auth — matches WEBHOOK_AUTH_EMAIL + WEBHOOK_AUTH_PASSWORD env vars
-    // (Set these to the same email/password as an admin/editor account)
     if (!authorized && authHeader.startsWith("Basic ")) {
       try {
         const decoded = atob(authHeader.slice(6));
         const [email, password] = decoded.split(":");
-        const envEmail = process.env.WEBHOOK_AUTH_EMAIL;
-        const envPassword = process.env.WEBHOOK_AUTH_PASSWORD;
+        const envEmail = cfEnv.WEBHOOK_AUTH_EMAIL;
+        const envPassword = cfEnv.WEBHOOK_AUTH_PASSWORD;
         if (envEmail && envPassword && email === envEmail && password === envPassword) {
           authorized = true;
         }
@@ -67,7 +78,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (!authorized) {
-      return NextResponse.json({ error: "Unauthorized — invalid credentials" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized — invalid credentials" },
+        { status: 401 }
+      );
     }
 
     // Parse JSON body
@@ -75,12 +89,18 @@ export async function POST(req: NextRequest) {
     const { title, content, source, image_url, category } = body;
 
     if (!title || !content) {
-      return NextResponse.json({ error: "Missing required fields: title, content" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields: title, content" },
+        { status: 400 }
+      );
     }
 
-    const db = getDB();
+    const db = cfEnv.DB;
     if (!db) {
-      return NextResponse.json({ error: "Database not available" }, { status: 503 });
+      return NextResponse.json(
+        { error: "Database binding not available" },
+        { status: 503 }
+      );
     }
 
     const id = crypto.randomUUID();
