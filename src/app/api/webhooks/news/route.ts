@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+
+export const runtime = "edge";
 
 interface D1Result {
   results: unknown[];
@@ -22,8 +23,10 @@ interface CloudflareEnv {
 
 function getCfEnv(): CloudflareEnv | null {
   try {
-    const { env } = getCloudflareContext();
-    return env as unknown as CloudflareEnv;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getRequestContext } = require("@cloudflare/next-on-pages");
+    const { env } = getRequestContext();
+    return env as CloudflareEnv;
   } catch {
     return null;
   }
