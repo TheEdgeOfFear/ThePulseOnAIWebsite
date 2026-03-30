@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
 
@@ -23,8 +24,6 @@ interface Env {
 
 function getDB(): Env["DB"] | null {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getRequestContext } = require("@cloudflare/next-on-pages");
     const { env } = getRequestContext();
     return env.DB;
   } catch { return null; }

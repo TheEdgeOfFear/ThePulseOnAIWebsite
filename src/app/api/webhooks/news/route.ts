@@ -23,8 +23,6 @@ interface CloudflareEnv {
 
 function getCfEnv(): CloudflareEnv | null {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getRequestContext } = require("@cloudflare/next-on-pages");
     const { env } = getRequestContext();
     return env as CloudflareEnv;
   } catch {
