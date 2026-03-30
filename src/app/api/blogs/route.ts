@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
 
@@ -31,12 +30,8 @@ interface Env {
 }
 
 function getDB(): Env["DB"] | null {
-  try {
-    const { env } = getRequestContext();
-    return env.DB;
-  } catch {
-    return null;
-  }
+  return process.env.DB as any;
+}
 }
 
 export async function GET() {
